@@ -6,3 +6,5 @@ Ignore the bad code, I was just trying to get this into a nice state.
 
 Image crossfading, and the image transitions to grayscale when the track is paused.
 Refreshes every three seconds, which could definitely be lowered.
+
+Cookies for the session are set to a blank slate every time the app opens in case you want to log in with a different account.
