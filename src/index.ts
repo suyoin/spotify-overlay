@@ -1,10 +1,10 @@
-import { app, BrowserWindow, screen, session } from "electron";
+import { app, BrowserWindow, ipcMain, screen, session } from "electron";
+import { AUTHORIZE_URL, CLIENT_ID, SCOPE } from "./constant";
 import { InitiateTrayController } from "./controllers/trayController";
+import { getAuthorizationCode } from "./util/oauth2";
+import { getCurrentlyPlaying, oauth2Callback } from "./util/spotifyOAuth2";
+import { join } from "path";
 declare const MAIN_WINDOW_WEBPACK_ENTRY: any;
-
-const requestFilters = {
-	urls: ["http://localhost:3000/api/callback*"],
-};
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -16,6 +16,8 @@ const singleInstanceLock = app.requestSingleInstanceLock();
 if (!singleInstanceLock) {
 	app.quit();
 } else {
+	let refreshToken: string | undefined;
+
 	const createWindow = (): void => {
 		// Create the browser window.
 		const display = screen.getPrimaryDisplay();
@@ -42,29 +44,73 @@ if (!singleInstanceLock) {
 			},
 		});
 
-		InitiateTrayController(mainWindow);
+		InitiateTrayController(mainWindow, () => {
+			refreshToken = undefined;
+			mainWindow.webContents.send("login-status-changed", false);
+		});
 
 		mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 		mainWindow.setAlwaysOnTop(true, "screen-saver", 1);
 		mainWindow.setFullScreenable(false);
 
-		session.defaultSession.webRequest.onBeforeRequest(
-			requestFilters,
-			(details, callback) => {
-				const url = details.url;
+		mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-				callback({
-					cancel: false,
+		mainWindow.webContents.session.clearStorageData({});
+
+		ipcMain.on("login", (evt) => {
+			getAuthorizationCode(AUTHORIZE_URL, CLIENT_ID, { scope: SCOPE })
+				.then(async (authCode) => {
+					refreshToken = await oauth2Callback(authCode);
+
+					evt.reply("login-status-changed", true);
+				})
+				.catch((err) => {
+					console.error(err);
+
+					evt.reply("login-status-changed", false);
 				});
+		});
+
+		ipcMain.on("get-login-status", (evt) => {
+			evt.reply(
+				"login-status-changed",
+				refreshToken !== undefined ? true : false
+			);
+		});
+
+		ipcMain.on(
+			"get-currently-playing",
+			async (evt, currentlyPlayingId: string) => {
+				if (!refreshToken) {
+					const authCode = await getAuthorizationCode(
+						AUTHORIZE_URL,
+						CLIENT_ID,
+						{ scope: SCOPE }
+					);
+					refreshToken = await oauth2Callback(authCode);
+				}
+
+				evt.reply(
+					"currently-playing",
+					await getCurrentlyPlaying(refreshToken, currentlyPlayingId)
+				);
 			}
 		);
-
-		mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 	};
 
 	app.setAppUserModelId("suyoin.spotify-overlay");
 	app.setName("spotify-overlay");
 	app.whenReady().then(() => {
+		session.defaultSession.protocol.registerFileProtocol(
+			"static",
+			(request, callback) => {
+				const fileUrl = request.url.replace("static://", "static/");
+				const filePath = join(app.getAppPath(), ".webpack/renderer", fileUrl);
+				console.log(request);
+				callback(filePath);
+			}
+		);
+
 		createWindow();
 	});
 
