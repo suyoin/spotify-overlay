@@ -1,13 +1,25 @@
-import React, { useContext, useEffect, useRef } from "react";
+import { ipcRenderer } from "electron";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
-import { SpotifyContext, SpotifyProvider } from "../lib/spotify";
+import { getCurrentlyPlaying } from "../util/spotifyOAuth2";
 import Image from "./components/Image";
 import "./index.css";
 
+type ReturnType<T extends (...args: Array<any>) => any> = T extends (
+	...args: Array<any>
+) => infer R
+	? R
+	: any;
+
+type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
+
 const InformationPanel = (): React.ReactElement => {
-	const { refreshToken, setRefreshToken, spotifyData, loading } = useContext(
-		SpotifyContext
-	);
+	const [
+		currentlyPlaying,
+		setCurrentlyPlaying,
+	] = useState<SpotifyCurrentlyPlayingTrack>();
+	const [loggedIn, setLoggedIn] = useState(false);
+	const intervalHandle = useRef<NodeJS.Timeout>();
 
 	const containerRef = useRef<HTMLDivElement>();
 
@@ -55,7 +67,56 @@ const InformationPanel = (): React.ReactElement => {
 		};
 	}, []);
 
-	if (!refreshToken) {
+	useEffect(() => {
+		ipcRenderer.on(
+			"currently-playing",
+			(
+				evt,
+				newCurrentlyPlaying: ThenArg<ReturnType<typeof getCurrentlyPlaying>>
+			) => {
+				if (newCurrentlyPlaying !== "Same track") {
+					setCurrentlyPlaying(newCurrentlyPlaying);
+				}
+			}
+		);
+
+		ipcRenderer.on("login-status-changed", (evt, isLoggedIn: boolean) => {
+			setLoggedIn(isLoggedIn);
+		});
+		ipcRenderer.send("get-login-status");
+
+		return () => {
+			ipcRenderer.removeAllListeners("currently-playing");
+			ipcRenderer.removeAllListeners("login-status-changed");
+		};
+	}, []);
+
+	useEffect(() => {
+		if (intervalHandle.current) {
+			clearInterval(intervalHandle.current);
+			intervalHandle.current = null;
+		}
+
+		if (loggedIn) {
+			console.log("Starting fetch interval");
+			const effect = () => {
+				ipcRenderer.send("get-currently-playing");
+			};
+
+			intervalHandle.current = setInterval(effect, 3000);
+
+			effect();
+		}
+
+		return () => {
+			if (intervalHandle.current) {
+				clearInterval(intervalHandle.current);
+				intervalHandle.current = null;
+			}
+		};
+	}, [loggedIn]);
+
+	if (!loggedIn) {
 		return (
 			<div
 				style={{
@@ -72,7 +133,7 @@ const InformationPanel = (): React.ReactElement => {
 				}}
 			>
 				<Image
-					src={`https://i.ytimg.com/vi/yi_ppuOMgSc/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBuL67obI_2HCl00Fr9zWBjfP4XQQ`}
+					src={`url('static://ocean.jpg')`}
 					containerStyle={{
 						width: "100vw",
 						height: "100vh",
@@ -126,9 +187,12 @@ const InformationPanel = (): React.ReactElement => {
 					>
 						not connected
 					</p>
-					<a
-						href="https://google.com"
+					<button
+						onClick={() => {
+							ipcRenderer.send("login");
+						}}
 						style={{
+							background: "transparent",
 							border: "1px solid",
 							padding: "5px",
 							borderRadius: "0.5rem",
@@ -146,7 +210,7 @@ const InformationPanel = (): React.ReactElement => {
 						}}
 					>
 						authenticate
-					</a>
+					</button>
 				</div>
 			</div>
 		);
@@ -168,11 +232,14 @@ const InformationPanel = (): React.ReactElement => {
 			}}
 		>
 			<Image
-				src={`https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png`}
+				src={currentlyPlaying?.item.album.images[0].url}
 				containerStyle={{
 					width: "100vw",
 					height: "100vh",
 				}}
+				imageClass={
+					currentlyPlaying?.is_playing ? `normal-img` : `grayscale-img`
+				}
 				imageStyle={{
 					position: "absolute",
 					height: "100%",
@@ -236,7 +303,7 @@ const InformationPanel = (): React.ReactElement => {
 							boxSizing: "border-box",
 						}}
 					>
-						titleasdasdasdasdasdsadadsadasdsadasdsadasdasdsadadasd
+						{currentlyPlaying?.item.name}
 					</p>
 					<p
 						style={{
@@ -260,7 +327,9 @@ const InformationPanel = (): React.ReactElement => {
 							fontWeight: 700,
 						}}
 					>
-						author
+						{currentlyPlaying?.item
+							? currentlyPlaying.item.artists.map((v) => v.name).join(", ")
+							: ""}
 					</p>
 				</div>
 			</div>
@@ -268,9 +337,4 @@ const InformationPanel = (): React.ReactElement => {
 	);
 };
 
-ReactDOM.render(
-	<SpotifyProvider>
-		<InformationPanel />
-	</SpotifyProvider>,
-	document.getElementById("root")
-);
+ReactDOM.render(<InformationPanel />, document.getElementById("root"));
