@@ -176,7 +176,7 @@ const InformationPanel = (): React.ReactElement => {
 							overflow: "hidden",
 							textOverflow: "ellipsis",
 							whiteSpace: "nowrap",
-							color: "rgba(255,255,255,1)",
+							color: "rgba(98,195,98,1)",
 
 							lineHeight: "1.75rem",
 							fontSize: "1.125rem",
@@ -194,19 +194,21 @@ const InformationPanel = (): React.ReactElement => {
 						style={{
 							background: "transparent",
 							border: "1px solid",
-							padding: "5px",
-							borderRadius: "0.5rem",
+							padding: "6px",
+							borderRadius: "0.3rem",
 
 							backgroundSize: "100%",
 
 							overflow: "hidden",
 							textOverflow: "ellipsis",
 							whiteSpace: "nowrap",
-							color: "rgba(255,255,255,1)",
+							color: "rgba(98,225,98,1)",
 
 							lineHeight: "1.5rem",
 							fontSize: "1rem",
-							fontWeight: 700,
+							fontWeight: 400,
+
+							transition: "all 0.5s ease-out",
 						}}
 					>
 						authenticate
