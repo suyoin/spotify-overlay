@@ -9,7 +9,10 @@ app.once("quit", () => {
 	}
 });
 
-export const InitiateTrayController = (currentWindow: BrowserWindow): Tray => {
+export const InitiateTrayController = (
+	currentWindow: BrowserWindow,
+	logoutCallback: () => void
+): Tray => {
 	if (currentTray) {
 		return currentTray;
 	}
@@ -30,6 +33,12 @@ export const InitiateTrayController = (currentWindow: BrowserWindow): Tray => {
 				enabled: false,
 			},
 			{ type: "separator" },
+			{
+				label: "Logout",
+				click: () => {
+					logoutCallback();
+				},
+			},
 			{
 				label: "Exit",
 				click: () => {
