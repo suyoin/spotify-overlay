@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from "react";
 const Image = (props: {
 	src: string;
 	containerStyle?: React.CSSProperties;
+	imageClass?: string;
 	imageStyle?: React.CSSProperties;
 }): React.ReactElement => {
 	const { src, containerStyle } = props;
@@ -38,10 +39,11 @@ const Image = (props: {
 		<div style={containerStyle}>
 			{topSrc && (
 				<img
-					className="selectDisable"
+					className={`selectDisable ${props.imageClass || ""}`}
 					key={topSrc}
 					src={topSrc}
 					style={{
+						content: topSrc.match(/url\(.+\)/) ? topSrc : undefined,
 						position: "absolute",
 						...props.imageStyle,
 					}}
@@ -49,10 +51,11 @@ const Image = (props: {
 			)}
 			{bottomSrc && topSrc !== bottomSrc && (
 				<img
-					className="selectDisable"
+					className={`selectDisable ${props.imageClass || ""}`}
 					key={bottomSrc}
 					src={bottomSrc}
 					style={{
+						content: bottomSrc.match(/url\(.+\)/) ? bottomSrc : undefined,
 						position: "absolute",
 						...props.imageStyle,
 
