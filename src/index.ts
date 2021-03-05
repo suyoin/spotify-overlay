@@ -33,7 +33,7 @@ if (!singleInstanceLock) {
 			skipTaskbar: true,
 			transparent: true,
 			frame: false,
-			//focusable: false,
+			focusable: false,
 			alwaysOnTop: true,
 			//resizable: false,
 			x: padding,
