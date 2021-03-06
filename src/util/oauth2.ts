@@ -59,7 +59,6 @@ export const getAuthorizationCode = (
 			const code = query.get("code");
 			const error = query.get("error");
 
-			console.log(url, query);
 			if (!state && !code && !error) {
 				return;
 			}
