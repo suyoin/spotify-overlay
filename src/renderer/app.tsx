@@ -234,7 +234,7 @@ const InformationPanel = (): React.ReactElement => {
 			}}
 		>
 			<Image
-				src={currentlyPlaying?.item?.album?.images[0]?.url}
+				src={currentlyPlaying?.item?.album?.images[0]?.url || ""}
 				containerStyle={{
 					width: "100vw",
 					height: "100vh",
