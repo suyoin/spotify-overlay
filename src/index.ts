@@ -106,7 +106,6 @@ if (!singleInstanceLock) {
 			(request, callback) => {
 				const fileUrl = request.url.replace("static://", "static/");
 				const filePath = join(app.getAppPath(), ".webpack/renderer", fileUrl);
-				console.log(request);
 				callback(filePath);
 			}
 		);
