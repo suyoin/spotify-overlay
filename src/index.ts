@@ -19,7 +19,6 @@ if (!singleInstanceLock) {
 	let refreshToken: string | undefined;
 
 	const createWindow = (): void => {
-		// Create the browser window.
 		const display = screen.getPrimaryDisplay();
 
 		const windowWidth = 320;
