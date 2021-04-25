@@ -74,8 +74,18 @@ const InformationPanel = (): React.ReactElement => {
 				evt,
 				newCurrentlyPlaying: ThenArg<ReturnType<typeof getCurrentlyPlaying>>
 			) => {
-				if (newCurrentlyPlaying !== "Same track") {
-					setCurrentlyPlaying(newCurrentlyPlaying);
+				switch (newCurrentlyPlaying.response_type) {
+					case "new": {
+						setCurrentlyPlaying(newCurrentlyPlaying);
+						break;
+					}
+					case "same_track": {
+						setCurrentlyPlaying({
+							...currentlyPlaying,
+							progress_ms: newCurrentlyPlaying.progress_ms,
+						});
+						break;
+					}
 				}
 			}
 		);
@@ -99,11 +109,25 @@ const InformationPanel = (): React.ReactElement => {
 
 		if (loggedIn) {
 			console.log("Starting fetch interval");
+			let secondsElapsed = 4;
 			const effect = () => {
-				ipcRenderer.send("get-currently-playing");
+				secondsElapsed += 1;
+
+				if (secondsElapsed >= 4) {
+					secondsElapsed = 0;
+					ipcRenderer.send("get-currently-playing");
+				} else {
+					setCurrentlyPlaying((current) => {
+						if (!current || !current.is_playing) {
+							return current;
+						}
+
+						return { ...current, progress_ms: current.progress_ms + 1000 };
+					});
+				}
 			};
 
-			intervalHandle.current = setInterval(effect, 3000);
+			intervalHandle.current = setInterval(effect, 1000);
 
 			effect();
 		}
@@ -234,7 +258,10 @@ const InformationPanel = (): React.ReactElement => {
 			}}
 		>
 			<Image
-				src={currentlyPlaying?.item?.album?.images[0]?.url || ""}
+				src={
+					currentlyPlaying?.item?.album?.images[0]?.url ||
+					`url('static://bald.png')`
+				}
 				containerStyle={{
 					width: "100vw",
 					height: "100vh",
@@ -309,8 +336,6 @@ const InformationPanel = (): React.ReactElement => {
 					</p>
 					<p
 						style={{
-							marginTop: "-rem",
-
 							backgroundSize: "100%",
 							WebkitTextFillColor: "transparent",
 							WebkitFontSmoothing: "antialiased",
@@ -334,6 +359,20 @@ const InformationPanel = (): React.ReactElement => {
 							: ""}
 					</p>
 				</div>
+				<div
+					style={{
+						position: "absolute",
+						width: `${
+							((currentlyPlaying?.progress_ms || 0) /
+								(currentlyPlaying?.item?.duration_ms || 1)) *
+							100
+						}%`,
+						height: "0.4rem",
+						bottom: 0,
+
+						backgroundColor: "rgba(98,205,98,1)",
+					}}
+				/>
 			</div>
 		</div>
 	);
