@@ -1,4 +1,6 @@
 interface SpotifyCurrentlyPlayingTrack {
+	response_type: "new";
+
 	context: {
 		external_urls: {
 			spotify: string;
@@ -51,4 +53,9 @@ interface SpotifyCurrentlyPlayingTrack {
 		type: string;
 		uri: string;
 	};
+}
+
+interface SpotifyProgressUpdate {
+	response_type: "same_track";
+	progress_ms: number;
 }

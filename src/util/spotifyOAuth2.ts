@@ -15,7 +15,7 @@ export const oauth2Callback = async (code: string): Promise<string> => {
 export const getCurrentlyPlaying = async (
 	refresh_token: string,
 	currently_playing_id: string
-): Promise<"Same track" | SpotifyCurrentlyPlayingTrack> => {
+): Promise<SpotifyProgressUpdate | SpotifyCurrentlyPlayingTrack> => {
 	const response = await axios({
 		method: "GET",
 		url: "https://spotify-overlay-site.vercel.app/api/currentlyPlaying",
