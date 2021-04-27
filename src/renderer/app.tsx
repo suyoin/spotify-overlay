@@ -39,7 +39,7 @@ const InformationPanel = (): React.ReactElement => {
 				return;
 			}
 
-			window.moveTo(ev.screenX - wX, ev.screenY - wY);
+			ipcRenderer.send("drag-window", ev.screenX - wX, ev.screenY - wY);
 		};
 
 		const mouseUpCallback = () => {

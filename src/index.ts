@@ -55,6 +55,15 @@ if (!singleInstanceLock) {
 
 		mainWindow.webContents.session.clearStorageData({});
 
+		ipcMain.on("drag-window", (evt, x: number, y: number) => {
+			const [sizeX, sizeY] = mainWindow.getSize();
+			mainWindow.setPosition(
+				Math.min(Math.max(0, x), display.workArea.width - sizeX),
+				Math.min(Math.max(0, y), display.workArea.height - sizeY)
+			);
+			mainWindow.setSize(sizeX, sizeY);
+		});
+
 		ipcMain.on("login", (evt) => {
 			getAuthorizationCode(AUTHORIZE_URL, CLIENT_ID, { scope: SCOPE })
 				.then(async (authCode) => {
