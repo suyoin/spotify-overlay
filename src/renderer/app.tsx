@@ -260,7 +260,7 @@ const InformationPanel = (): React.ReactElement => {
 			<Image
 				src={
 					currentlyPlaying?.item?.album?.images[0]?.url ||
-					`url('static://bald.png')`
+					`url('static://ocean.png')`
 				}
 				containerStyle={{
 					width: "100vw",
@@ -332,7 +332,7 @@ const InformationPanel = (): React.ReactElement => {
 							boxSizing: "border-box",
 						}}
 					>
-						{currentlyPlaying?.item.name}
+						{currentlyPlaying?.item?.name || "ad break"}
 					</p>
 					<p
 						style={{
