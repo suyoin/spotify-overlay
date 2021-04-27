@@ -1,7 +1,7 @@
 {
 	"name": "spotify-overlay",
 	"productName": "spotify-overlay",
-	"version": "2.0.0",
+	"version": "2.0.2",
 	"description": "Desktop spotify overlay.",
 	"main": ".webpack/main",
 	"scripts": {
